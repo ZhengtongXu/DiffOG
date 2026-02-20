@@ -1,0 +1,311 @@
+_target_: diffog.workspace.train_diffusion_diffog_res_workspace.TrainDiffusiondiffogResWorkspace
+checkpoint:
+  save_last_ckpt: true
+  save_last_snapshot: false
+dataloader:
+  batch_size: 128
+  num_workers: 8
+  persistent_workers: false
+  pin_memory: true
+  shuffle: true
+dataset_obs_steps: 2
+init_path: data/outputs/train_diffusion_square/ckpts/latest.ckpt
+ema:
+  _target_: diffusion_policy.model.diffusion.ema_model.EMAModel
+  inv_gamma: 1.0
+  max_value: 0.9999
+  min_value: 0.0
+  power: 0.75
+  update_after_step: 0
+exp_name: default
+horizon: 16
+keypoint_visible_rate: 1.0
+logging:
+  group: square
+  id: null
+  mode: online
+  name: diffog_square_res_ddim
+  project: diffog_log
+  resume: true
+  tags:
+  - diffog
+  - square
+  - ddim
+  - residual
+
+n_action_steps: 8
+n_latency_steps: 0
+n_obs_steps: 2
+name: train_diffusion_diffog
+obs_as_global_cond: true
+optimizer:
+  _target_: torch.optim.AdamW
+  betas:
+  - 0.95
+  - 0.999
+  eps: 1.0e-08
+  lr: 0.0001
+  weight_decay: 1.0e-06
+past_action_visible: false
+device: &device cuda:0
+policy:
+  _target_: diffog.policy.diffusion_diffog_res_policy.DiffusionDiffogResPolicy
+  constraint: 0.1
+  smooth_weight: 4.0
+  cond_predict_scale: true
+  diffusion_step_embed_dim: 128
+  direction: minus
+  device: *device
+  down_dims:
+  - 512
+  - 1024
+  - 2048
+  horizon: 16
+  kernel_size: 5
+  n_action_steps: 8
+  n_groups: 8
+  n_obs_steps: 2
+  noise_scheduler:
+    _target_: diffusers.schedulers.scheduling_ddim.DDIMScheduler
+    num_train_timesteps: 100
+    beta_start: 0.0001
+    beta_end: 0.02
+    # beta_schedule is important
+    # this is the best we found
+    beta_schedule: squaredcos_cap_v2
+    clip_sample: True
+    set_alpha_to_one: True
+    steps_offset: 0
+    prediction_type: epsilon # or sample
+  num_inference_steps: 32
+  obs_as_global_cond: true
+  obs_encoder:
+    _target_: diffusion_policy.model.vision.multi_image_obs_encoder.MultiImageObsEncoder
+    shape_meta:
+      action:
+        shape:
+        - 7
+      obs:
+        agentview_image:
+          shape:
+          - 3
+          - 84
+          - 84
+          type: rgb
+        robot0_eef_pos:
+          shape:
+          - 3
+        robot0_eef_quat:
+          shape:
+          - 4
+        robot0_eye_in_hand_image:
+          shape:
+          - 3
+          - 84
+          - 84
+          type: rgb
+        robot0_gripper_qpos:
+          shape:
+          - 2
+    rgb_model:
+      _target_: diffusion_policy.model.vision.model_getter.get_resnet
+      name: resnet18
+      weights: null
+    resize_shape: null
+    crop_shape: [76, 76]
+    # constant center crop
+    random_crop: True
+    use_group_norm: True
+    share_rgb_model: False
+    imagenet_norm: True
+
+  shape_meta:
+    action:
+      shape:
+      - 7
+    obs:
+      agentview_image:
+        shape:
+        - 3
+        - 84
+        - 84
+        type: rgb
+      robot0_eef_pos:
+        shape:
+        - 3
+      robot0_eef_quat:
+        shape:
+        - 4
+      robot0_eye_in_hand_image:
+        shape:
+        - 3
+        - 84
+        - 84
+        type: rgb
+      robot0_gripper_qpos:
+        shape:
+        - 2
+shape_meta:
+  action:
+    shape:
+    - 7
+  obs:
+    agentview_image:
+      shape:
+      - 3
+      - 84
+      - 84
+      type: rgb
+    robot0_eef_pos:
+      shape:
+      - 3
+    robot0_eef_quat:
+      shape:
+      - 4
+    robot0_eye_in_hand_image:
+      shape:
+      - 3
+      - 84
+      - 84
+      type: rgb
+    robot0_gripper_qpos:
+      shape:
+      - 2
+task:
+  abs_action: false
+  dataset:
+    _target_: diffusion_policy.dataset.robomimic_replay_image_dataset.RobomimicReplayImageDataset
+    abs_action: false
+    dataset_path: data/robomimic/datasets/square/ph/image.hdf5
+    horizon: 16
+    n_obs_steps: 2
+    pad_after: 7
+    pad_before: 1
+    rotation_rep: rotation_6d
+    seed: 42
+    shape_meta:
+      action:
+        shape:
+        - 7
+      obs:
+        agentview_image:
+          shape:
+          - 3
+          - 84
+          - 84
+          type: rgb
+        robot0_eef_pos:
+          shape:
+          - 3
+        robot0_eef_quat:
+          shape:
+          - 4
+        robot0_eye_in_hand_image:
+          shape:
+          - 3
+          - 84
+          - 84
+          type: rgb
+        robot0_gripper_qpos:
+          shape:
+          - 2
+    use_cache: true
+    val_ratio: 0.02
+  dataset_path: data/robomimic/datasets/square/ph/image.hdf5
+  dataset_type: ph
+  env_runner:
+    _target_: diffog.env_runner.diffog_robomimic_image_res_runner.DiffogRobomimicImageResRunner
+    abs_action: false
+    crf: 22
+    dataset_path: data/robomimic/datasets/square/ph/image.hdf5
+    fps: 10
+    max_steps: 400
+    n_action_steps: 8
+    n_envs: 26
+    n_obs_steps: 2
+    n_test: 50
+    n_test_vis: 2
+    n_train: 2
+    n_train_vis: 2
+    render_obs_key: agentview_image
+    shape_meta:
+      action:
+        shape:
+        - 7
+      obs:
+        agentview_image:
+          shape:
+          - 3
+          - 84
+          - 84
+          type: rgb
+        robot0_eef_pos:
+          shape:
+          - 3
+        robot0_eef_quat:
+          shape:
+          - 4
+        robot0_eye_in_hand_image:
+          shape:
+          - 3
+          - 84
+          - 84
+          type: rgb
+        robot0_gripper_qpos:
+          shape:
+          - 2
+    test_start_seed: 100000
+    tqdm_interval_sec: 1.0
+    train_start_idx: 0
+  name: square_image
+  shape_meta:
+    action:
+      shape:
+      - 7
+    obs:
+      agentview_image:
+        shape:
+        - 3
+        - 84
+        - 84
+        type: rgb
+      robot0_eef_pos:
+        shape:
+        - 3
+      robot0_eef_quat:
+        shape:
+        - 4
+      robot0_eye_in_hand_image:
+        shape:
+        - 3
+        - 84
+        - 84
+        type: rgb
+      robot0_gripper_qpos:
+        shape:
+        - 2
+  task_name: square
+task_name: square_image
+training:
+  checkpoint_every: 1
+  debug: false
+  device: *device
+  gradient_accumulate_every: 1
+  lr_scheduler: cosine
+  lr_warmup_steps: 500
+  max_train_steps: null
+  max_val_steps: null
+  num_epochs: 2000
+  resume: true
+  rollout_every: 50
+  sample_every: 50
+  seed: 42
+  tqdm_interval_sec: 1.0
+  use_ema: true
+  val_every: 50
+val_dataloader:
+  batch_size: 128
+  num_workers: 8
+  persistent_workers: false
+  pin_memory: true
+  shuffle: false

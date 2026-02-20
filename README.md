@@ -6,7 +6,7 @@ _Published in IEEE Transactions on Robotics_
 
 DiffOG is a transformer-based differentiable trajectory optimization framework that enhances visuomotor policies by refining action trajectories to be smoother and constraint-compliant while maintaining fidelity to the demonstration distribution.
 
-![DiffOG](teasers/teaser.png)
+![DiffOG](teaser/first_page.png)
 
 ## Installation
 
